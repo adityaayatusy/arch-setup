@@ -10,18 +10,10 @@ basic() {
                  --threads $(nproc) \
                  --save /etc/pacman.d/mirrorlist
     sudo pacman -Syyu --refresh
-    
-    sudo pacman -S dbus
-    sudo pacman -S fuse2
-    sudo pacman -S htop              # Interactive CLI process viewer
-    sudo pacman -S powertop          # A tool to diagnose issues with power consumption and power management
-    powertop --auto-tune
 
-    sudo pacman -S xorg xorg-apps xorg-xinit xdotool xclip xsel
+    sed -i 's,#MAKEFLAGS="-j2",MAKEFLAGS="-j$(nproc)",g' /etc/makepkg.conf
+    sed -i "s,PKGEXT='.pkg.tar.xz',PKGEXT='.pkg.tar',g" /etc/makepkg.conf
     
-    # KERNALE liq
-    sudo pacman -S linux-lqx linux-lqx-headers
-
     sudo pacman -S base-devel        # Basic tools to build Arch Linux packages
     sudo pacman -S git               # Distributed version control system
     sudo pacman -S zip               # Compressor/archiver for creating and modifying zipfiles
@@ -35,6 +27,22 @@ basic() {
     sudo pacman -S cmake
     sudo pacman -S make
     sudo pacman -S dpkg
+    sudo pacman -S ntfs-3g
+    sudo pacman -S dbus
+    sudo pacman -S fuse2
+    sudo pacman -S htop              # Interactive CLI process viewer
+    sudo pacman -S powertop          # A tool to diagnose issues with power consumption and power management
+    powertop --auto-tune
+
+    sudo pacman -S xorg xorg-apps xorg-xinit xdotool xclip xsel
+    
+    #SSH
+    sudo pacman -S openssh
+    sudo systemctl start sshd
+    sudo systemctl enable sshd
+
+    # KERNALE liq
+    sudo pacman -S linux-lqx linux-lqx-headers
 
     #install yay
     git clone https://aur.archlinux.org/yay.git
@@ -50,6 +58,7 @@ basic() {
     sudo ufw enable
     sudo ufw allow 59100/tcp
     sudo ufw allow 59100:59200/udp
+    sudo ufw allow 22/tcp
 
     # bluethoot
     sudo pacman -S bluez
@@ -144,7 +153,12 @@ application() {
 }
 
 gnome() {
-    sudo pacman -S gnome gnome-tweaks gnome-terminal
+    sudo pacman -S gnome \
+        gnome-tweaks \
+        gnome-terminal \
+        extension-manager \
+        gnome-shell \
+        nautilus
     systemctl enable gdm.service
     systemctl enable NetworkManager.service
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
