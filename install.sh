@@ -149,7 +149,8 @@ application() {
         bat \
         balena-etcher \
         gparted \
-        file-roller
+        file-roller \
+        steam
 }
 
 gnome() {
