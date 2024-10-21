@@ -1,134 +1,175 @@
 #!/usr/bin/env bash
 
 basic() {
-    sudo pacman -Syyu
+#    sudo pacman -Syyu
 
     #Reflector
-    sudo pacman -S reflector 
-    sudo reflector --country Singapore,Indonesia,KR \
-                 --fastest 10 \
-                 --threads $(nproc) \
-                 --save /etc/pacman.d/mirrorlist
+    sudo pacman -S rsync make reflector --noconfirm
+    sudo reflector --country Singapore,Indonesia,Japan \
+    --fastest 10 \
+    --threads $(nproc) \
+    --save /etc/pacman.d/mirrorlist
     sudo pacman -Syyu --refresh
 
-    sed -i 's,#MAKEFLAGS="-j2",MAKEFLAGS="-j$(nproc)",g' /etc/makepkg.conf
-    sed -i "s,PKGEXT='.pkg.tar.xz',PKGEXT='.pkg.tar',g" /etc/makepkg.conf
-    
-    sudo pacman -S base-devel        # Basic tools to build Arch Linux packages
-    sudo pacman -S git               # Distributed version control system
-    sudo pacman -S zip               # Compressor/archiver for creating and modifying zipfiles
-    sudo pacman -S unzip             # For extracting and viewing files in .zip archives
-    sudo pacman -S htop              # Interactive CLI process viewer
-    sudo pacman -S curl              
-    sudo pacman -S wget         
-    sudo pacman -S gcc 
-    sudo pacman -S gdb 
-    sudo pacman -S clang
-    sudo pacman -S cmake
-    sudo pacman -S make
-    sudo pacman -S dpkg
-    sudo pacman -S ntfs-3g
-    sudo pacman -S dbus
-    sudo pacman -S fuse2
-    sudo pacman -S htop              # Interactive CLI process viewer
-    sudo pacman -S powertop          # A tool to diagnose issues with power consumption and power management
-    powertop --auto-tune
-
-    sudo pacman -S xorg xorg-apps xorg-xinit xdotool xclip xsel
-    
-    #SSH
-    sudo pacman -S openssh
-    sudo systemctl start sshd
-    sudo systemctl enable sshd
-
-    # KERNALE liq
-    sudo pacman -S linux-lqx linux-lqx-headers
+    sudo sed -i 's,#MAKEFLAGS="-j2",MAKEFLAGS="-j$(nproc)",g' /etc/makepkg.conf
+    sudo sed -i "s,PKGEXT='.pkg.tar.xz',PKGEXT='.pkg.tar',g" /etc/makepkg.conf
 
     #install yay
     git clone https://aur.archlinux.org/yay.git
     cd yay
-    makepkg -si
+    makepkg -si --noconfirm
+    cd ..
 
-    sudo pacman -S go
-    sudo pacman -S jdk17-openjdk
+    declare -a PACKAGES=(
+        base-devel
+        git
+        zip
+        unzip
+        htop
+        curl
+        wget
+        gcc
+        gdb
+        clang
+        cmake
+        dpkg
+        fuse2
+        ntfs-3g
+        dbus
+        powertop
+        xorg
+        xorg-apps
+        xorg-xinit
+        xdotool
+        xclip
+        xsel
+        openssh
+        go
+        jdk17-openjdk
+        ufw
+        udisks2
+        bluez
+        bluez-utils
+        blueman
+        pipewire
+        jack2
+        WirePlumber
+        pipewire-audio
+        pipewire-pulse
+        neofetch
+        python
+        python-pip
+        python-poetry
+        python-virtualenv
 
-    # FIrewall
-    sudo pacman -Sy ufw
+        docker
+        docker-compose
+        php
+    )
+
+    for PACKAGE in "${PACKAGES[@]}"; do
+        echo "Installing: $PACKAGE"
+        sudo pacman -S "$PACKAGE" --noconfirm
+    done
+    
+    ./theme.sh
+    ./setup_git.sh
+
+    powertop --auto-tune
+    
+    #SSH
+    sudo systemctl start sshd
+    sudo systemctl enable sshd
+
+    #FIREWALL
     sudo ufw allow ssh/tcp
     sudo ufw enable
     sudo ufw allow 59100/tcp
     sudo ufw allow 59100:59200/udp
     sudo ufw allow 22/tcp
 
-    # bluethoot
-    sudo pacman -S bluez
-    sudo pacman -S bluez-utils
-    sudo pacman -S blueman
+    #BLUETHOOT
     sudo systemctl start bluetooth.service
     sudo systemctl enable bluetooth.service
 
-    # pipewire
-    sudo pacman -S pipewire
-    sudo pacman -S jack2
-    sudo pacman -S WirePlumber
-    sudo pacman -S pipewire-audio
-    sudo pacman -S pipewire-pulse
-
-    sudo pacman -S neofetch 
-    sudo pacman -S python          # python itself
-    sudo pacman -S python-pip      # python package manager
-    sudo pacman -S python-poetry   # python package manager (better one)
-    sudo pacman -S python-virtualenv
-
+    # KERNALE liq
+    yay --batchinstall --sudoloop --noconfirm -S linux-lqx linux-lqx-headers
+#    remove old kernal
     # Docker
-    sudo pacman -S docker           # cli tool for container management
-    sudo pacman -S docker-compose
-    sudo systemctl enable docker            # enable docker daemon on system start
-    sudo usermod -a -G docker yourusername  # to be able to run docker as non-root
-    newgrp docker     
+    sudo systemctl enable docker
+    sudo usermod -a -G docker "$(whoami)"
 
-    sudo pacman -S php  
-    exec ./composer.sh
+    ./composer.sh
     
     # nvm nodejs
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-    nvm version-remote --lts
+    #config nvm
+    NVM_CONFIG='export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
+    if ! grep -q "NVM_DIR" "$HOME/.bashrc"; then
+        echo "$NVM_CONFIG" >> "$HOME/.bashrc"
+        echo "NVM configuration added to ~/.bashrc"
+    else
+        echo "NVM configuration already exists in ~/.bashrc"
+    fi
+    source "$HOME/.bashrc"
 
     curl -fsSL https://bun.sh/install | bash
     curl -fsSL https://get.pnpm.io/install.sh | sh -
     npm install --global yarn
+    source /home/corax/.bashrc
 
     #Disable GRUB delay
+    ./disable_grub_delay.sh
 
-    # add .zhsrc
-    # path bun, pnpm, nvm
+    ./zsh.sh
 
+    echo "Done install basic"
 }
 
 cpu_intel(){
-    sudo pacman -S intel-ucode
+    sudo pacman -S intel-ucode --noconfirm
     sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+    echo "Done setup cpu intel"
 }
 
 gpu_amd() {
-    sudo pacman -S xf86-video-amdgpu
-    sudo pacman -S amdvlk
-    sudo pacman -S mesa
-    yay -S rocm-core gc
-    sudo pacman -S gperftools
+    sudo pacman --noconfirm -S \
+    xf86-video-amdgpu \
+    amdvlk \
+    mesa \
+    gperftools
     
-    sudo gpasswd -a username render
-    sudo gpasswd -a username video
+    yay --batchinstall --sudoloop --noconfirm -S rocm-core gc
 
-    # sudo nano /etc/environment
-    # export HSA_OVERRIDE_GFX_VERSION=10.3.0
+    sudo gpasswd -a "$(whoami)" render
+    sudo gpasswd -a "$(whoami)" video
 
+    ENV_VARS=(
+        "HSA_OVERRIDE_GFX_VERSION=10.3.0"
+        "GSK_RENDERER=gl"
+    )
+
+    for var in "${ENV_VARS[@]}"; do
+        add_env_var "$var"
+    done
+
+    echo "Done setup gpu amd"
+}
+
+add_env_var() {
+    local var="$1"
+    if ! grep -q "^$var" /etc/environment; then
+        echo "$var" | sudo tee -a /etc/environment > /dev/null
+        echo "Added: $var"
+    else
+        echo "Already exists: $var"
+    fi
 }
 
 application() {
-    yay -S \
+    yay --batchinstall --sudoloop --noconfirm -S \
         jetbrains-toolbox \
         brave-bin \
         google-chrome \
@@ -143,7 +184,6 @@ application() {
         libreoffice-fresh \
         ffmpeg-full \
         yt-dlp \
-        zsh \
         audiorelay \
         chrome-remote-desktop\
         bat \
@@ -154,29 +194,22 @@ application() {
 }
 
 gnome() {
-    sudo pacman -S gnome \
+    sudo pacman --noconfirm -S gnome \
         gnome-tweaks \
         gnome-terminal \
-        extension-manager \
-        gnome-shell \
-        nautilus
+        gnome-shell-extensions
+
+    yay --batchinstall --sudoloop --noconfirm -S extension-manager
+
     systemctl enable gdm.service
     systemctl enable NetworkManager.service
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-}
 
-confirm() {
-    echo -en "[${GREEN}y${NORMAL}/${RED}n${NORMAL}]: "
-    read -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]]]
-    then
-        exit 0
-    fi
+    ./extension-gnome.sh
 }
 
 main() {
-    basic
+#    basic
     cpu_intel
     gpu_amd
     gnome
