@@ -1,0 +1,2 @@
+#fix error mounting ntfs use file manager
+sudo ntfsfix -d /dev/sdb1

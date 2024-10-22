@@ -61,7 +61,7 @@ basic() {
         python-pip
         python-poetry
         python-virtualenv
-
+        inetutils
         docker
         docker-compose
         php
@@ -93,7 +93,7 @@ basic() {
     sudo systemctl enable bluetooth.service
 
     # KERNALE liq
-    yay --batchinstall --sudoloop --noconfirm -S linux-lqx linux-lqx-headers
+    yay --batchinstall --sudoloop --noconfirm -S linux-lqx linux-lqx-headers xorg-server
 #    remove old kernal
     # Docker
     sudo systemctl enable docker
@@ -140,8 +140,9 @@ gpu_amd() {
     amdvlk \
     mesa \
     gperftools
+
     
-    yay --batchinstall --sudoloop --noconfirm -S rocm-core gc
+    yay --batchinstall --sudoloop --noconfirm -S rocm-core gc lib32-mesa xinit-xsession lib32-amdvlk4
 
     sudo gpasswd -a "$(whoami)" render
     sudo gpasswd -a "$(whoami)" video
