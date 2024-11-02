@@ -1,2 +1,12 @@
 #fix error mounting ntfs use file manager
 sudo ntfsfix -d /dev/sdb1
+
+#patching chrome remote desktop
+cd /opt/google/chrome-remote-desktop && sudo cp chrome-remote-desktop chrome-remote-desktop_bak && wget -qO- "https://gist.githubusercontent.com/nightuser/2ec1b91a66ec33ef0a0a67b6c570eb40/raw/51513e39375fd238b50b71eebbbb239be5015ba7/use_existing_session.patch" | tail -n +5 > use_existing_session.patch && sudo patch -Np1 -i ./use_existing_session.patch && systemctl --user restart chrome-remote-desktop.service
+
+#ssh
+chmod 600 ~/.ssh/id_rsa
+chmod 644 ~/.ssh/id_rsa.pub
+
+#change java
+sudo archlinux-java set

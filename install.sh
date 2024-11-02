@@ -20,6 +20,8 @@ basic() {
     makepkg -si --noconfirm
     cd ..
 
+    ./enable_miltilib.sh
+
     declare -a PACKAGES=(
         base-devel
         git
@@ -45,7 +47,7 @@ basic() {
         xsel
         openssh
         go
-        jdk17-openjdk
+        jdk21-openjdk
         ufw
         udisks2
         bluez
@@ -61,10 +63,14 @@ basic() {
         python-pip
         python-poetry
         python-virtualenv
+        python-srt
+        python-pytorch-opt-rocm
+        python-rich
         inetutils
         docker
         docker-compose
         php
+        steam
     )
 
     for PACKAGE in "${PACKAGES[@]}"; do
@@ -136,13 +142,13 @@ cpu_intel(){
 
 gpu_amd() {
     sudo pacman --noconfirm -S \
+    amdgpu-pro-installer
     xf86-video-amdgpu \
     amdvlk \
     mesa \
     gperftools
-
     
-    yay --batchinstall --sudoloop --noconfirm -S rocm-core gc lib32-mesa xinit-xsession lib32-amdvlk4
+    yay --batchinstall --sudoloop --noconfirm -S rocm-core rocm-hip-sdk rocm-opencl-sdkk gc lib32-mesa xinit-xsession lib32-amdvlk4
 
     sudo gpasswd -a "$(whoami)" render
     sudo gpasswd -a "$(whoami)" video
@@ -191,7 +197,7 @@ application() {
         balena-etcher \
         gparted \
         file-roller \
-        steam
+        burpsuite
 }
 
 gnome() {
@@ -210,7 +216,7 @@ gnome() {
 }
 
 main() {
-#    basic
+    basic
     cpu_intel
     gpu_amd
     gnome
